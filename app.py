@@ -75,10 +75,8 @@ def la_health_data(record):
         losangeles.record_id,
     ]
 
-    	facility_zip	owner_id	owner_name	pe_description	program_element_pe	program_name	program_status	record_id
 
-
-    results = db.session.query(*sel).filter(losangeles.sample == sample).all()
+    results = db.session.query(*sel).filter(losangeles.record == record).all()
 
     # Create a dictionary entry for each row of metadata information
     la_health_data = {}
@@ -102,7 +100,7 @@ def la_health_data(record):
         la_health_data["program_element_pe"] = result[16]
         la_health_data["program_name"] = result[17]
         la_health_data["program_status"] = result[18]
-        la_health_data["recard_id"] = result[19]
+        la_health_data["recard_id"] = result  [19]
 
     print(la_health_data)
     return jsonify(la_health_data)
@@ -110,7 +108,7 @@ def la_health_data(record):
 
 @app.route("/locations/<location>")
 def locations(location):
-    """Return `otu_ids`, `otu_labels`,and `sample_values`."""
+    """Return location data."""
     stmt = db.session.query(locations).statement
     df = pd.read_sql_query(stmt, db.session.bind)
 
