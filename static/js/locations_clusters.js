@@ -1,10 +1,8 @@
-// Creating map object
-  
+// Creating map object  
 var myMap = L.map("map", {
-  center: [33.7701, -118.1937],
-  zoom: 9
+  center: [34.025874, -118.360857],
+  zoom: 11
 });
-// function createMap(serviceRequests) {
 
 // Adding tile layer to the map
 L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
@@ -15,43 +13,94 @@ L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 }).addTo(myMap);
 
 // Assign variable for data source (e.g. assemble via API query URL)
-var file = "static/js/locations.csv"
-console.log(file)
+var locations_data = "data/locations.csv"
+console.log(locations_data)
 
-// Grab the data with d3
-d3.csv(file, 
-  function(response) {
-  console.log(response);
+var scoring_data = "data/scoring.csv"
+console.log(scoring_data)
+
+// Grab the locations data via d3.csv
+d3.csv(locations_data, 
+  function(locationsRes)
+  {
+    console.log(locationsRes[1])
+    // Grab the scoring data via d3.csv
+    d3.csv(scoring_data,
+    function(scoringRes)
+    {
+    console.log(scoringRes[39])
 
 // Create a new marker cluster group
-var markers = L.markerClusterGroup();
+var markers = new L.MarkerClusterGroup({
+  maxClusterRadius: 120,
+  singleMarkerMode: false,
+  spiderfyDistanceMultiplier: 5
+});
 
 // Loop through data
-for (var i = 0; i < response.length; i++) {
-    console.log(response[i].lat)
+for (var i = 0; i < locationsRes.length; i++) {
+
+    // Create a new facility object with properties of both Response objects
+    var restaurant = Object.assign({},locationsRes[i],scoringRes[i]);
 
     // Set the data latitude and longtitude
-    var lat = response[i].lat;
-    var lng = response[i].lng;
-    // if(i < response.length/50){
-    //     console.log(typeof lat);
-    //     console.log(lat);
-    //     console.log(response[0]);
-    // }
+    var lat = restaurant.lat;
+    var lng = restaurant.lng;
+    if(i < restaurant.length/50){
+        console.log(typeof lat);
+        console.log(lat);
+        console.log(restaurant[0]);
+    }
 
     // Check for lat, lng service request property
     if (lat) {
         if (lng) {
+
+    var scoreIcon;
+
+    if (restaurant.score > 89) {
+      scoreIcon = "letterA";
+    }
+    else if (restaurant.score > 79) {
+      scoreIcon = "letterB";
+    }
+    else {
+      scoreIcon = "letterC";
+    }
+
+  var icons = {
+    letterA: new L.icon({
+      iconUrl: 'https://jmc39.github.io/img/letterA.png',
+      iconSize: [39, 39],
+      iconAnchor: [22, 39],
+      popupAnchor: [-3, -76]
+    }),
+    letterB: new L.icon({
+      iconUrl: 'https://jmc39.github.io/img/letterB.png',
+      iconSize: [39, 39],
+      iconAnchor: [22, 39],
+      popupAnchor: [-3, -76]
+    }),
+    letterC: new L.icon({
+      iconUrl: 'https://jmc39.github.io/img/letterC.png',
+      iconSize: [39, 39],
+      iconAnchor: [22, 39],
+      popupAnchor: [-3, -76]
+    }),
+  };
     // Add a new marker to the cluster group and bind a pop-up
-    markers.addLayer(L.marker([lat, lng])
+    markers.addLayer(L.marker([lat, lng], {icon: icons[scoreIcon]})
     .bindPopup(	
-        `Facility ID: ${response[i].facility_id}<br>
-        Address: ${response[i].facility_address}<br>
-        ${response[i].facility_city}, ${response[i].facility_state} ${response[i].facility_zip}<br>
+        `Grade: ${restaurant.grade} Scoring: ${restaurant.score}<br>
+        Facility ID: ${restaurant.facility_id}<br>
+        Address: ${restaurant.facility_address}<br>
+        ${restaurant.facility_city}, ${restaurant.facility_state} 
+        ${restaurant.facility_zip}<br>
         `));
         }   
     }
 }
   // Add our marker cluster layer to the map
   myMap.addLayer(markers);
+});
 });
